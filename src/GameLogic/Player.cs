@@ -1421,8 +1421,10 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
             return;
         }
 
-        var canWalkToTarget = currentMap.Terrain.WalkMap[target.X, target.Y];
-        if (canWalkToTarget)
+        // Validate the whole path server-side: every step must be contiguous and end on walkable
+        // terrain. This prevents walking through blocked cells or sending a fabricated path.
+        var isPathWalkable = WalkPathValidator.IsPathWalkable(currentMap, steps.Span);
+        if (isPathWalkable)
         {
             this.Logger.LogDebug("WalkToAsync: Player is walking to {0}", target);
 
@@ -1434,9 +1436,9 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         }
         else
         {
-            this.Logger.LogWarning("WalkToAsync: Player requested to walk to {0}, but it's not an allowed target", target);
+            this.Logger.LogWarning("WalkToAsync: Player requested an invalid or blocked walk path to {0}; resyncing position.", target);
 
-            // We'll send the current coordinates back to the client, so it doesn't appear in the invalid coordinates.
+            // We'll send the current coordinates back to the client, so it doesn't appear in invalid coordinates.
             await this.InvokeViewPlugInAsync<IObjectMovedPlugIn>(p => p.ObjectMovedAsync(this, MoveType.Instant)).ConfigureAwait(false);
         }
     }
