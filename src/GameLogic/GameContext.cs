@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Threading;
+using MUnique.OpenMU.GameLogic.Combat;
 using MUnique.OpenMU.GameLogic.MiniGames;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.GameLogic.Views;
@@ -81,6 +82,7 @@ public class GameContext : AsyncDisposable, IGameContext
             this.ConfigurationChangeMediator = changeMediator;
             this.ItemPowerUpFactory = new ItemPowerUpFactory(loggerFactory.CreateLogger<ItemPowerUpFactory>());
             this.PartyManager = new PartyManager(configuration.MaximumPartySize, loggerFactory.CreateLogger<Party>());
+            this.AttackScheduler = new AttackTaskManager(loggerFactory.CreateLogger<AttackTaskManager>());
             this._recoverTimer = new Timer(this.RecoverTimerElapsed, null, this.Configuration.RecoveryInterval, this.Configuration.RecoveryInterval);
             this._tasksTimer = new Timer(this.ExecutePeriodicTasks, null, 1000, 1000);
             this.FeaturePlugIns = new FeaturePlugInContainer(this.PlugInManager);
@@ -136,6 +138,9 @@ public class GameContext : AsyncDisposable, IGameContext
 
     /// <inheritdoc/>
     public IDropGenerator DropGenerator { get; }
+
+    /// <inheritdoc/>
+    public IAttackScheduler AttackScheduler { get; }
 
     /// <inheritdoc />
     public FeaturePlugInContainer FeaturePlugIns { get; }
@@ -445,6 +450,7 @@ public class GameContext : AsyncDisposable, IGameContext
         this._configChangeHandlerRegistration.Dispose();
         await this._recoverTimer.DisposeAsync().ConfigureAwait(false);
         await this._tasksTimer.DisposeAsync().ConfigureAwait(false);
+        await this.AttackScheduler.DisposeAsync().ConfigureAwait(false);
         await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 

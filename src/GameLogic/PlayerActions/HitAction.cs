@@ -60,6 +60,17 @@ public class HitAction
         }
 
         player.Rotation = lookingDirection;
+
+        // Route the attack through the server-authoritative scheduler: it enforces the attack-speed
+        // cadence (dropping attacks which arrive too fast) and applies the hit after the animation delay.
+        _ = player.GameContext.AttackScheduler.TryScheduleAttack(
+            player,
+            target,
+            () => this.ApplyHitAsync(player, target, attackAnimation, lookingDirection));
+    }
+
+    private async ValueTask ApplyHitAsync(Player player, IAttackable target, byte attackAnimation, Direction lookingDirection)
+    {
         await target.AttackByAsync(player, null, false).ConfigureAwait(false);
         if (player.Attributes?[Stats.TransformationSkin] is { } skin and not 0
             && await this.ApplySkinnedMonstersSkillAsync(player, target, (short)skin).ConfigureAwait(false) is var (skill, effectApplied))

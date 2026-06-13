@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameLogic;
 
 using System.Collections.Concurrent;
+using MUnique.OpenMU.GameLogic.Combat;
 using MUnique.OpenMU.GameLogic.MiniGames;
 using MUnique.OpenMU.GameLogic.Views;
 using MUnique.OpenMU.Interfaces;
@@ -121,6 +122,12 @@ public interface IGameContext
     /// Gets the party manager which handles party creation and persistence.
     /// </summary>
     IPartyManager PartyManager { get; }
+
+    /// <summary>
+    /// Gets the attack scheduler which enforces the server-authoritative attack-speed cadence and applies
+    /// basic-attack hits after their animation delay.
+    /// </summary>
+    IAttackScheduler AttackScheduler { get; }
 
     /// <summary>
     /// Gets the initialized maps which are hosted on this context.
